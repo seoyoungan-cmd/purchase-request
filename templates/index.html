@@ -40,8 +40,25 @@
       z-index: 100;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
-    .header h1 { font-size: 1.1rem; font-weight: 700; }
-    .header p  { font-size: 0.75rem; opacity: 0.85; margin-top: 2px; }
+    .header h1 { font-size: 1.2rem; font-weight: 700; }
+    .header-sub  { font-size: 0.78rem; opacity: 0.85; margin-top: 2px; }
+    .header-desc { font-size: 0.88rem; opacity: 0.95; margin-top: 8px; line-height: 1.5; font-weight: 500; }
+
+    /* ===== 안내 배너 ===== */
+    .info-banner {
+      background: #fff8e1;
+      border-left: 4px solid #f9a825;
+      padding: 12px 16px;
+      margin: 12px 16px 0;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      border-radius: 8px;
+      color: #5d4037;
+      line-height: 1.5;
+    }
+    .info-banner .banner-main { font-size: 0.88rem; font-weight: 600; }
+    .info-banner .banner-sub  { font-size: 0.75rem; color: #a07040; margin-top: 2px; }
 
     /* ===== 메인 ===== */
     .main { padding: 16px; max-width: 480px; margin: 0 auto; }
@@ -55,11 +72,10 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     }
     .section-title {
-      font-size: 0.78rem;
+      font-size: 0.9rem;
       font-weight: 700;
       color: #2D6A4F;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.02em;
       margin-bottom: 10px;
     }
 
@@ -108,7 +124,7 @@
       margin-bottom: 14px;
     }
     .card-num {
-      font-size: 0.82rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: #2D6A4F;
     }
@@ -129,9 +145,9 @@
     .field:last-child { margin-bottom: 0; }
     .field label {
       display: block;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #445;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #334;
       margin-bottom: 6px;
     }
     .req { color: #e44; margin-left: 2px; }
@@ -433,7 +449,16 @@
   <!-- 헤더 -->
   <div class="header">
     <h1 id="headerTitle" onclick="onTitleTap()">🛒 구매 요청</h1>
-    <p>제1원외탕전 총무 채널로 전송됩니다</p>
+    <p class="header-sub">산청 1호점 · 총무</p>
+    <p class="header-desc">필요한 물품을 꼼꼼히 작성해 주세요! 확인 후 구매 진행됩니다 🛒</p>
+  </div>
+
+  <!-- 안내 배너 -->
+  <div style="padding: 0 0; max-width: 512px; margin: 12px auto 0;">
+    <div class="info-banner">
+      <div class="banner-main">제출하면 총무 채널에 자동으로 전달되니, 따로 연락 안 하셔도 돼요 😁</div>
+      <div class="banner-sub">편하쥬?~ ₍ᐢ•ﻌ•ᐢ₎*･ﾟ｡☆</div>
+    </div>
   </div>
 
   <div class="main">
