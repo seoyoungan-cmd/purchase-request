@@ -263,7 +263,7 @@ def submit():
         lines.append(f'   · 수량: {quantity}개')
         lines.append(f'   · 요청 이유: {reason}')
         if link:
-            lines.append(f'   · 구매링크: {link}')
+            lines.append(f'   · 구매링크: <{link}|링크>')
         if price:
             lines.append(f'   · 가격: {price}')
         if has_photo:
