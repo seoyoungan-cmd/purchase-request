@@ -271,6 +271,8 @@ def submit():
         return result
 
     num = 1
+    일반_with_nums = []
+
     if 전결:
         lines.append('✅ *전결* (즉시 구매)')
         for item in 전결:
@@ -281,10 +283,37 @@ def submit():
         lines.append('📋 *일반* (품의 필요)')
         for item in 일반:
             lines.extend(format_item(num, item))
+            일반_with_nums.append((num, item))
             num += 1
             lines.append('')
     if lines and lines[-1] == '':
         lines.pop()
+
+    # 품의 양식 블록
+    if 일반:
+        lines.append('')
+        lines.append('───────────────────')
+        lines.append('📋 *품의 양식* (복사 후 품의 채널에 붙여넣기)')
+        for item_num, item in 일반_with_nums:
+            product     = (item.get('product') or '').strip()
+            option      = (item.get('option') or '').strip()
+            quantity    = item.get('quantity', 1)
+            reason      = (item.get('reason') or '').strip()
+            link        = (item.get('link') or '').strip()
+            price       = (item.get('price') or '').strip()
+            product_display    = f'{product} ({option})' if option else product
+            quantity_display   = f'{option} {quantity}개' if option else f'{quantity}개'
+            price_display      = price if price else '-'
+            procurement_source = f'네이버({product_display})' if link else '-'
+            lines.append('')
+            if len(일반) > 1:
+                lines.append(f'*[{item_num}번 품목]*')
+            lines.append(f'구입 주체 : 산청1호점')
+            lines.append(f'구매 품목 : {product_display}')
+            lines.append(f'구매 금액 : {price_display}')
+            lines.append(f'구매 수량 : {quantity_display}')
+            lines.append(f'구매처명 : {procurement_source}')
+            lines.append(f'구매 사유 : {reason}')
 
     message_text = '\n'.join(lines)
     thread_ts = get_workflow_ts()
