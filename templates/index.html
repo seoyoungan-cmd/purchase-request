@@ -442,6 +442,25 @@
       background-position: right 12px center;
     }
     .field select:focus { border-color: #2D6A4F; }
+
+    /* ===== 미리보기 모달 ===== */
+    .preview-requester {
+      font-size: 0.9rem; color: #556;
+      margin-bottom: 12px; padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .preview-item {
+      background: #f8faf9; border-radius: 8px;
+      padding: 10px 12px; margin-bottom: 8px;
+      font-size: 0.88rem; color: #334; line-height: 1.7;
+    }
+    .preview-item-title { font-weight: 700; color: #2D6A4F; margin-bottom: 2px; }
+    .btn-send-confirm {
+      width: 100%; padding: 14px; background: #2D6A4F; color: white;
+      border: none; border-radius: 10px; font-size: 1rem;
+      font-weight: 700; cursor: pointer; margin-bottom: 10px;
+    }
+    .btn-send-confirm:active { opacity: 0.85; }
   </style>
 </head>
 <body>
@@ -500,6 +519,16 @@
 
   <!-- 토스트 -->
   <div class="toast" id="toast"></div>
+
+  <!-- 미리보기 모달 -->
+  <div class="modal-overlay" id="previewModal" onclick="closePreviewModal(event)">
+    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:80vh;overflow-y:auto;">
+      <div class="modal-title">📋 이렇게 전송할게요!</div>
+      <div id="previewContent"></div>
+      <button class="btn-send-confirm" onclick="sendConfirmed()">전송하기 ✓</button>
+      <button class="modal-close-btn" onclick="closePreviewModal()">✏️ 수정하기</button>
+    </div>
+  </div>
 
   <!-- 관리자 비밀번호 모달 -->
   <div class="modal-overlay" id="adminPwModal" onclick="closeAdminPwModal(event)">
@@ -834,33 +863,53 @@
 
       if (hasError || items.length === 0) return;
 
-      // 전송 버튼 비활성화
+      // 미리보기 모달 표시
+      _pendingSubmit = { requester, dept, items };
+      const sender = dept ? `${dept} ${requester}` : requester;
+      let html = `<div class="preview-requester">요청자: <strong>${sender}</strong></div>`;
+      items.forEach((item, i) => {
+        const pd = item.option ? `${item.product} (${item.option})` : item.product;
+        const cl = item.category ? ` <span style="font-size:0.78rem;color:#2D6A4F;font-weight:600;">[${item.category}]</span>` : '';
+        html += `<div class="preview-item">
+          <div class="preview-item-title">${i+1}. ${pd}${cl}</div>
+          <div>· 수량: ${item.quantity}개</div>
+          <div>· 이유: ${item.reason}</div>
+          ${item.link  ? `<div>· 링크: ${item.link}</div>`   : ''}
+          ${item.price ? `<div>· 가격: ${item.price}</div>`  : ''}
+          ${item.has_photo ? '<div>· 📷 사진 첨부됨</div>' : ''}
+        </div>`;
+      });
+      document.getElementById('previewContent').innerHTML = html;
+      document.getElementById('previewModal').classList.add('open');
+    }
+
+    let _pendingSubmit = null;
+
+    async function sendConfirmed() {
+      if (!_pendingSubmit) return;
+      document.getElementById('previewModal').classList.remove('open');
+
+      const { requester, dept, items } = _pendingSubmit;
+      _pendingSubmit = null;
+
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>전송 중...';
 
       try {
+        const cards = document.querySelectorAll('.item-card');
         const formData = new FormData();
         formData.append('data', JSON.stringify({ requester, dept, items }));
-
-        // 사진 파일 추가
         cards.forEach((card, i) => {
           const fileInput = card.querySelector('.photo-input');
-          if (fileInput.files[0]) {
-            formData.append(`photo_${i}`, fileInput.files[0]);
-          }
+          if (fileInput.files[0]) formData.append(`photo_${i}`, fileInput.files[0]);
         });
 
-        const resp = await fetch('/api/submit', {
-          method: 'POST',
-          body: formData,
-        });
+        const resp = await fetch('/api/submit', { method: 'POST', body: formData });
         const result = await resp.json();
 
         if (result.success) {
-          const msg = result.notice || '슬랙에 전송했습니다! ✓';
-          showToast(msg, false);
-          // 카드 초기화 (요청자는 유지)
+          showToast('슬랙에 전송했습니다! ✓', false);
           document.getElementById('itemList').innerHTML = '';
           cardCount = 0;
           addCard();
@@ -873,6 +922,11 @@
         btn.disabled = false;
         btn.innerHTML = '슬랙에 전송하기';
       }
+    }
+
+    function closePreviewModal(e) {
+      if (!e || e.target === document.getElementById('previewModal'))
+        document.getElementById('previewModal').classList.remove('open');
     }
 
     // ── 토스트 ──────────────────────────────────────────────────
