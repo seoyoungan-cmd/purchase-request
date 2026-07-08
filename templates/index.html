@@ -384,6 +384,48 @@
       margin-right: 6px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== 구분 토글 ===== */
+    .cat-toggle {
+      display: flex;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1.5px solid #C8E6D8;
+    }
+    .cat-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: #f8faf9;
+      color: #778;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      border-right: 1px solid #C8E6D8;
+    }
+    .cat-btn:last-child { border-right: none; }
+    .cat-btn.active { background: #2D6A4F; color: white; }
+
+    /* ===== 드롭다운 ===== */
+    .field select {
+      width: 100%;
+      border: 1.5px solid #dde;
+      border-radius: 8px;
+      padding: 10px 36px 10px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      background: white;
+      cursor: pointer;
+      color: #1a2e22;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .field select:focus { border-color: #2D6A4F; }
   </style>
 </head>
 <body>
@@ -485,6 +527,63 @@
     requesterInput.addEventListener('input', updateSavedBadge);
     deptInput.addEventListener('input', updateSavedBadge);
 
+    // ── 전결소모품 목록 로드 ──────────────────────────────────────────
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyimqvaX7ey-dvbfVOvkNqZEAq2ByUVSm1ORHkSHoBaAb3YBxdH_pgH6byr1ICHSiqQ/exec';
+    let sheetItems = [];
+    fetch(SHEET_URL)
+      .then(r => r.json())
+      .then(data => { sheetItems = data; })
+      .catch(() => {});
+
+    function selectCategory(btn) {
+      const card = btn.closest('.item-card');
+      card.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const val = btn.dataset.val;
+      const jArea  = card.querySelector('.jeongyul-area');
+      const bjArea = card.querySelector('.bijeongyul-area');
+      if (val === '전결') {
+        jArea.style.display  = 'block';
+        bjArea.style.display = 'none';
+        populateProductDropdown(card);
+      } else {
+        jArea.style.display  = 'none';
+        bjArea.style.display = 'block';
+      }
+    }
+
+    function populateProductDropdown(card) {
+      const sel = card.querySelector('.product-select');
+      const current = sel.value;
+      sel.innerHTML = '<option value="">품목을 선택해주세요</option>';
+      sheetItems.forEach(item => {
+        const o = document.createElement('option');
+        o.value = item.name;
+        o.textContent = item.name;
+        if (item.name === current) o.selected = true;
+        sel.appendChild(o);
+      });
+    }
+
+    function onProductSelect(sel) {
+      const card = sel.closest('.item-card');
+      const item = sheetItems.find(i => i.name === sel.value);
+      const optField = card.querySelector('.options-field');
+      const optSel   = card.querySelector('.option-select');
+      if (item && item.options.length > 0) {
+        optSel.innerHTML = '<option value="">선택해주세요</option>';
+        item.options.forEach(o => {
+          const el = document.createElement('option');
+          el.value = o; el.textContent = o;
+          optSel.appendChild(el);
+        });
+        optField.style.display = 'block';
+      } else {
+        optField.style.display = 'none';
+        optSel.innerHTML = '';
+      }
+    }
+
     // ── 카드 추가 ────────────────────────────────────────────────
     function addCard() {
       cardCount++;
@@ -501,9 +600,34 @@
         </div>
 
         <div class="field">
-          <label>품목명 <span class="req">*</span></label>
-          <input type="text" class="product-input"
-            placeholder="예) A4 용지 80g, 볼펜 검정" autocomplete="off">
+          <label>구분 <span class="req">*</span></label>
+          <div class="cat-toggle">
+            <button type="button" class="cat-btn" data-val="전결" onclick="selectCategory(this)">전결소모품</button>
+            <button type="button" class="cat-btn" data-val="비전결" onclick="selectCategory(this)">비전결소모품</button>
+          </div>
+        </div>
+
+        <div class="jeongyul-area" style="display:none">
+          <div class="field">
+            <label>품목 <span class="req">*</span></label>
+            <select class="product-select" onchange="onProductSelect(this)">
+              <option value="">품목을 선택해주세요</option>
+            </select>
+          </div>
+          <div class="field options-field" style="display:none">
+            <label>사이즈 / 규격 <span class="req">*</span></label>
+            <select class="option-select">
+              <option value="">선택해주세요</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bijeongyul-area" style="display:none">
+          <div class="field">
+            <label>품목명 <span class="req">*</span></label>
+            <input type="text" class="product-input"
+              placeholder="예) A4 용지 80g, 볼펜 검정" autocomplete="off">
+          </div>
         </div>
 
         <div class="field">
@@ -522,6 +646,16 @@
           <label>구매 요청 이유 <span class="req">*</span></label>
           <textarea class="reason-input" rows="2"
             placeholder="예) 재고 소진, 파손, 신규 필요 등"></textarea>
+        </div>
+
+        <div class="field">
+          <label>구매 링크 <span class="opt">(선택)</span></label>
+          <input type="text" class="link-input" placeholder="https://" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label>가격 <span class="opt">(선택)</span></label>
+          <input type="text" class="price-input" placeholder="예) 15,000원" autocomplete="off">
         </div>
 
         <div class="field">
@@ -621,18 +755,48 @@
       let hasError = false;
 
       cards.forEach((card, i) => {
-        const product = card.querySelector('.product-input').value.trim();
-        const qty     = parseInt(card.querySelector('.qty-input').value) || 1;
-        const reason  = card.querySelector('.reason-input').value.trim();
+        const catBtn   = card.querySelector('.cat-btn.active');
+        const category = catBtn ? catBtn.dataset.val : '';
+        const qty      = parseInt(card.querySelector('.qty-input').value) || 1;
+        const reason   = card.querySelector('.reason-input').value.trim();
         const fileInput = card.querySelector('.photo-input');
         const hasPhoto  = fileInput.files.length > 0;
+        const link  = card.querySelector('.link-input').value.trim();
+        const price = card.querySelector('.price-input').value.trim();
 
-        if (!product) {
-          card.querySelector('.product-input').focus();
-          showToast(`품목 ${i + 1}: 품목명을 입력해주세요.`, true);
+        if (!category) {
+          showToast(`품목 ${i + 1}: 구분을 선택해주세요.`, true);
           hasError = true;
           return;
         }
+
+        let product = '', option = '';
+        if (category === '전결') {
+          product = card.querySelector('.product-select').value;
+          if (!product) {
+            showToast(`품목 ${i + 1}: 품목을 선택해주세요.`, true);
+            hasError = true;
+            return;
+          }
+          const optField = card.querySelector('.options-field');
+          if (optField.style.display !== 'none') {
+            option = card.querySelector('.option-select').value;
+            if (!option) {
+              showToast(`품목 ${i + 1}: 사이즈/규격을 선택해주세요.`, true);
+              hasError = true;
+              return;
+            }
+          }
+        } else {
+          product = card.querySelector('.product-input').value.trim();
+          if (!product) {
+            card.querySelector('.product-input').focus();
+            showToast(`품목 ${i + 1}: 품목명을 입력해주세요.`, true);
+            hasError = true;
+            return;
+          }
+        }
+
         if (!reason) {
           card.querySelector('.reason-input').focus();
           showToast(`품목 ${i + 1}: 구매 요청 이유를 입력해주세요.`, true);
@@ -640,7 +804,7 @@
           return;
         }
 
-        items.push({ product, quantity: qty, reason, has_photo: hasPhoto });
+        items.push({ product, quantity: qty, reason, has_photo: hasPhoto, category, option, link, price });
       });
 
       if (hasError || items.length === 0) return;

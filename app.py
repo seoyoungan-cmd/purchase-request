@@ -204,10 +204,21 @@ def submit():
         quantity = item.get('quantity', 1)
         reason = (item.get('reason') or '').strip()
         has_photo = item.get('has_photo', False)
+        category = (item.get('category') or '').strip()
+        option = (item.get('option') or '').strip()
+        link = (item.get('link') or '').strip()
+        price = (item.get('price') or '').strip()
 
-        lines.append(f'*{i}. {product}*')
+        product_display = f'{product} ({option})' if option else product
+        cat_label = f' [{category}]' if category else ''
+
+        lines.append(f'*{i}. {product_display}*{cat_label}')
         lines.append(f'   · 수량: {quantity}개')
         lines.append(f'   · 요청 이유: {reason}')
+        if link:
+            lines.append(f'   · 구매링크: {link}')
+        if price:
+            lines.append(f'   · 가격: {price}')
         if has_photo:
             lines.append('   · 📷 사진 첨부됨')
         if i < len(items):
