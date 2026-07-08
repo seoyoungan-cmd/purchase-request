@@ -246,30 +246,45 @@ def submit():
     # 메시지 구성
     sender = f'{dept} {requester}'.strip() if dept else requester
     lines = [f'🛒 *{sender}* 님의 구매 요청', '']
-    for i, item in enumerate(items, 1):
+
+    전결 = [item for item in items if (item.get('category') or '').strip() == '전결']
+    일반 = [item for item in items if (item.get('category') or '').strip() != '전결']
+
+    def format_item(num, item):
         product = (item.get('product') or '').strip()
         quantity = item.get('quantity', 1)
         reason = (item.get('reason') or '').strip()
         has_photo = item.get('has_photo', False)
-        category = (item.get('category') or '').strip()
         option = (item.get('option') or '').strip()
         link = (item.get('link') or '').strip()
         price = (item.get('price') or '').strip()
-
         product_display = f'{product} ({option})' if option else product
-        cat_label = f' [{category}]' if category else ''
-
-        lines.append(f'*{i}. {product_display}*{cat_label}')
-        lines.append(f'   · 수량: {quantity}개')
-        lines.append(f'   · 요청 이유: {reason}')
+        result = [f'*{num}. {product_display}*',
+                  f'   · 수량: {quantity}개',
+                  f'   · 요청 이유: {reason}']
         if link:
-            lines.append(f'   · 구매링크: <{link}|링크>')
+            result.append(f'   · 구매링크: <{link}|링크>')
         if price:
-            lines.append(f'   · 가격: {price}')
+            result.append(f'   · 가격: {price}')
         if has_photo:
-            lines.append('   · 📷 사진 첨부됨')
-        if i < len(items):
+            result.append('   · 📷 사진 첨부됨')
+        return result
+
+    num = 1
+    if 전결:
+        lines.append('✅ *전결* (즉시 구매)')
+        for item in 전결:
+            lines.extend(format_item(num, item))
+            num += 1
             lines.append('')
+    if 일반:
+        lines.append('📋 *일반* (품의 필요)')
+        for item in 일반:
+            lines.extend(format_item(num, item))
+            num += 1
+            lines.append('')
+    if lines and lines[-1] == '':
+        lines.pop()
 
     message_text = '\n'.join(lines)
     thread_ts = get_workflow_ts()
