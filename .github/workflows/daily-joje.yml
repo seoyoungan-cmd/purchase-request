@@ -1,0 +1,48 @@
+name: 조제일자 안내
+
+on:
+  schedule:
+    - cron: '55 20 * * 0-4'  # KST 월~금 05:55 (UTC 일~목 20:55)
+  workflow_dispatch:
+
+jobs:
+  send-joje:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 패키지 설치
+        run: pip install requests pytz
+
+      - name: 조제일자 슬랙 전송
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN_ILHO }}
+        run: |
+          python3 << 'EOF'
+          import requests
+          from datetime import datetime
+          import pytz
+          import os
+
+          kst = pytz.timezone('Asia/Seoul')
+          today = datetime.now(kst)
+
+          year = today.strftime('%y')
+          month = today.strftime('%m')
+          day = today.strftime('%d')
+
+          nums = [year[0], month[0], day[0], year[1], month[1], day[1]]
+          joje = '  '.join(nums)
+
+          message = f"\U0001f4c5 오늘 조제일자 안내\n───────────────\n　　*{joje}*"
+
+          res = requests.post(
+              'https://slack.com/api/chat.postMessage',
+              headers={'Authorization': f'Bearer {os.environ["SLACK_BOT_TOKEN"]}'},
+              json={'channel': 'C08BTN82VFZ', 'text': message, 'mrkdwn': True}
+          )
+          data = res.json()
+          if data.get('ok'):
+              print(f"✅ 전송 성공: {joje}")
+          else:
+              print(f"❌ 전송 실패: {data.get('error')}")
+              exit(1)
+          EOF
