@@ -585,10 +585,16 @@
     // ── 전결소모품 목록 로드 ──────────────────────────────────────────
     const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyimqvaX7ey-dvbfVOvkNqZEAq2ByUVSm1ORHkSHoBaAb3YBxdH_pgH6byr1ICHSiqQ/exec';
     let sheetItems = [];
-    fetch(SHEET_URL)
-      .then(r => r.json())
-      .then(data => { sheetItems = data; })
-      .catch(() => {});
+    let sheetLoadPromise = null;
+    function loadSheetItems() {
+      if (sheetLoadPromise) return sheetLoadPromise;
+      sheetLoadPromise = fetch(SHEET_URL)
+        .then(r => r.json())
+        .then(data => { sheetItems = data; return data; })
+        .catch(err => { sheetLoadPromise = null; throw err; });
+      return sheetLoadPromise;
+    }
+    loadSheetItems().catch(() => {});
 
     function selectCategory(btn) {
       const card = btn.closest('.item-card');
@@ -609,15 +615,25 @@
 
     function populateProductDropdown(card) {
       const sel = card.querySelector('.product-select');
-      const current = sel.value;
-      sel.innerHTML = '<option value="">품목을 선택해주세요</option>';
-      sheetItems.forEach(item => {
-        const o = document.createElement('option');
-        o.value = item.name;
-        o.textContent = item.name;
-        if (item.name === current) o.selected = true;
-        sel.appendChild(o);
-      });
+      function doFill() {
+        const current = sel.value;
+        sel.innerHTML = '<option value="">품목을 선택해주세요</option>';
+        sheetItems.forEach(item => {
+          const o = document.createElement('option');
+          o.value = item.name;
+          o.textContent = item.name;
+          if (item.name === current) o.selected = true;
+          sel.appendChild(o);
+        });
+      }
+      if (sheetItems.length > 0) {
+        doFill();
+      } else {
+        sel.innerHTML = '<option value="">불러오는 중...</option>';
+        loadSheetItems()
+          .then(() => doFill())
+          .catch(() => { sel.innerHTML = '<option value="">로드 실패 — 새로고침 후 시도</option>'; });
+      }
     }
 
     function onProductSelect(sel) {
