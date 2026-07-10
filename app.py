@@ -308,12 +308,12 @@ def submit():
             lines.append('')
             if len(일반) > 1:
                 lines.append(f'*[{item_num}번 품목]*')
-            lines.append(f'구입 주체 : 산청1호점')
-            lines.append(f'구매 품목 : {product_display}')
-            lines.append(f'구매 금액 : {price_display}')
-            lines.append(f'구매 수량 : {quantity_display}')
-            lines.append(f'구매처명 : {procurement_source}')
-            lines.append(f'구매 사유 : {reason}')
+            lines.append(f'• 구입 주체 : 산청1호점')
+            lines.append(f'• 구매 품목 : {product_display}')
+            lines.append(f'• 구매 금액 : {price_display}')
+            lines.append(f'• 구매 수량 : {quantity_display}')
+            lines.append(f'• 구매처명 : {procurement_source}')
+            lines.append(f'• 구매 사유 : {reason}')
 
     message_text = '\n'.join(lines)
     thread_ts = get_workflow_ts()
