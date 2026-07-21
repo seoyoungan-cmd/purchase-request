@@ -149,7 +149,7 @@
   </div>
   <div class="search-hint">검색 후 선택하면 ✅ 전결로 자동 추가돼요</div>
   <div style="height:10px;"></div>
-  <button class="btn-add-일반" onclick="addItem()">📋 찾는 품목이 없으면 일반으로 직접 올려주세요</button>
+  <button class="btn-add-일반" onclick="addItem()">📋 찾는 품목이 없거나 모르겠을 때 클릭!</button>
 </div>
 
 <!-- 품목 카드 -->
@@ -294,7 +294,7 @@ function addItem(presetName = '', presetCategory = '일반') {
     </div>
     <div class="field">
       <label>옵션 <span class="opt">(선택)</span></label>
-      <input type="text" id="option-${id}" placeholder="예) 흑색, 500매">
+      <input type="text" id="option-${id}" placeholder="예) S/M/L, 흑색, 500매 등">
     </div>
     <div class="field">
       <label>구매 요청 이유 <span class="req">*</span></label>
