@@ -1,32 +1,23 @@
-const SLACK_CHANNEL_ID = 'C08CAMBQR6Y'; // 제1원외탕전_총무
-const ADMIN_SLACK_ID  = 'U09L8PX7LF8'; // 안서영 (품의 양식 DM 수신)
-const RYJH_SLACK_ID   = 'U08BCPB7XMM'; // 류재현
+const SLACK_CHANNEL_ID = 'C08CAMBQR6Y';
+const ADMIN_SLACK_ID  = 'U09L8PX7LF8';
+const RYJH_SLACK_ID   = 'U08BCPB7XMM';
 
 const REQUESTER_SLACK_IDS = {
-  '문금신': 'U08CDC3LT1Q',
-  '김경화': 'U09M5E55SNT',
-  '박나영': 'U09AKF7CXHN',
-  '안서영': 'U09L8PX7LF8',
-  '이진경': 'U08CDC3T01Y',
-  '조유정': 'U09RV6NFNAW',
-  '주화영': 'U08CFTME56G',
-  '하태경': 'U08CDC3U79Q',
-  '허라인': 'U08CAQW8Z9S',
-  '류재현': 'U08BCPB7XMM',
-  '정진국': 'U09R3Q23XL2',
-  '강진수': 'U0A0R9MRGV9',
-  '김남희': 'U0AUQAYHQ5C',
-  '박지영': 'U08CD9MA1DZ',
+  '문금신': 'U08CDC3LT1Q', '김경화': 'U09M5E55SNT', '박나영': 'U09AKF7CXHN',
+  '안서영': 'U09L8PX7LF8', '이진경': 'U08CDC3T01Y', '조유정': 'U09RV6NFNAW',
+  '주화영': 'U08CFTME56G', '하태경': 'U08CDC3U79Q', '허라인': 'U08CAQW8Z9S',
+  '류재현': 'U08BCPB7XMM', '정진국': 'U09R3Q23XL2', '강진수': 'U0A0R9MRGV9',
+  '김남희': 'U0AUQAYHQ5C', '박지영': 'U08CD9MA1DZ',
 };
 
-function kstMidnight() {
-  const KST = 9 * 3600;
-  const now = Math.floor(Date.now() / 1000) + KST;
-  return now - (now % 86400); // UTC 자정 기준 KST 00:00
+function kstMidnightUnix() {
+  const KST_OFFSET = 9 * 3600;
+  const nowSec = Math.floor(Date.now() / 1000) + KST_OFFSET;
+  return nowSec - (nowSec % 86400) - KST_OFFSET;
 }
 
 async function getWorkflowTs(token) {
-  const oldest = kstMidnight() - 9 * 3600;
+  const oldest = kstMidnightUnix();
   const latest = oldest + 86399;
   const resp = await fetch(
     `https://slack.com/api/conversations.history?channel=${SLACK_CHANNEL_ID}&oldest=${oldest}&latest=${latest}&limit=50`,
@@ -88,9 +79,7 @@ async function uploadSlackFile(token, fileContent, filename, channelId, threadTs
   });
   const urlData = await urlResp.json();
   if (!urlData.ok) return urlData;
-
   await fetch(urlData.upload_url, { method: 'POST', body: fileContent });
-
   const completeResp = await fetch('https://slack.com/api/files.completeUploadExternal', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -104,36 +93,34 @@ async function uploadSlackFile(token, fileContent, filename, channelId, threadTs
   return completeResp.json();
 }
 
-function json(body, status = 200) {
+function jsonResp(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
 }
 
-export async function onRequestPost(context) {
-  const { request, env } = context;
+async function handleSubmit(request, env) {
   const SLACK_TOKEN = env.SLACK_BOT_TOKEN;
-  if (!SLACK_TOKEN) return json({ success: false, error: 'SLACK_BOT_TOKEN이 설정되지 않았습니다.' });
+  if (!SLACK_TOKEN) return jsonResp({ success: false, error: 'SLACK_BOT_TOKEN이 설정되지 않았습니다.' });
 
   let formData;
   try { formData = await request.formData(); }
-  catch { return json({ success: false, error: '데이터 파싱 오류' }); }
+  catch { return jsonResp({ success: false, error: '데이터 파싱 오류' }); }
 
   let data;
   try { data = JSON.parse(formData.get('data') || '{}'); }
-  catch { return json({ success: false, error: '잘못된 데이터 형식입니다.' }); }
+  catch { return jsonResp({ success: false, error: '잘못된 데이터 형식입니다.' }); }
 
   const requester = (data.requester || '').trim();
   const dept      = (data.dept || '').trim();
   const items     = data.items || [];
 
-  if (!requester) return json({ success: false, error: '요청자 이름을 입력해주세요.' });
-  if (!items.length) return json({ success: false, error: '품목을 1개 이상 입력해주세요.' });
+  if (!requester) return jsonResp({ success: false, error: '요청자 이름을 입력해주세요.' });
+  if (!items.length) return jsonResp({ success: false, error: '품목을 1개 이상 입력해주세요.' });
 
-  // ── 슬랙 메시지 구성 ─────────────────────────────────
   const sender = dept ? `${dept} ${requester}` : requester;
-  const lines = [`🛒 *${sender}* 님의 구매 요청`, ''];
+  const lines  = [`🛒 *${sender}* 님의 구매 요청`, ''];
 
   const 전결 = items.filter(it => (it.category || '').trim() === '전결');
   const 일반 = items.filter(it => (it.category || '').trim() !== '전결');
@@ -146,11 +133,11 @@ export async function onRequestPost(context) {
     const link     = (item.link    || '').trim();
     const price    = (item.price   || '').trim();
     const display  = option ? `${product} (${option})` : product;
-    const result   = [`*${num}. ${display}*`, `   · 수량: ${quantity}개`, `   · 요청 이유: ${reason}`];
-    if (link)           result.push(`   · 구매링크: <${link}|링크>`);
-    if (price)          result.push(`   · 가격: ${price}`);
-    if (item.has_photo) result.push('   · 📷 사진 첨부됨');
-    return result;
+    const r = [`*${num}. ${display}*`, `   · 수량: ${quantity}개`, `   · 요청 이유: ${reason}`];
+    if (link)           r.push(`   · 구매링크: <${link}|링크>`);
+    if (price)          r.push(`   · 가격: ${price}`);
+    if (item.has_photo) r.push('   · 📷 사진 첨부됨');
+    return r;
   }
 
   let num = 1;
@@ -171,17 +158,15 @@ export async function onRequestPost(context) {
   }
   if (lines[lines.length - 1] === '') lines.pop();
 
-  // ── 슬랙 채널 전송 ───────────────────────────────────
   const threadTs = await getWorkflowTs(SLACK_TOKEN);
   const slackId  = REQUESTER_SLACK_IDS[requester] || '';
   const iconUrl  = await getUserAvatar(SLACK_TOKEN, slackId);
   const result   = await postSlackMessage(SLACK_TOKEN, lines.join('\n'), threadTs, iconUrl);
 
-  if (!result.ok) return json({ success: false, error: result.error || '슬랙 전송 실패' });
+  if (!result.ok) return jsonResp({ success: false, error: result.error || '슬랙 전송 실패' });
 
   const msgTs = result.ts;
 
-  // ── 사진 업로드 ──────────────────────────────────────
   const photoErrors = [];
   for (let i = 0; i < items.length; i++) {
     const file = formData.get(`photo_${i}`);
@@ -195,7 +180,6 @@ export async function onRequestPost(context) {
     if (!upResult.ok) photoErrors.push(`${product}: ${upResult.error || '업로드 실패'}`);
   }
 
-  // ── 품의 양식 DM ─────────────────────────────────────
   if (일반WithNums.length) {
     const dm = ['📋 *품의 양식*', ''];
     for (const [itemNum, item] of 일반WithNums) {
@@ -226,5 +210,15 @@ export async function onRequestPost(context) {
     ? `사진 업로드 일부 실패: ${photoErrors.join(', ')}${noWorkflow ? ' / ' + noWorkflow : ''}`
     : noWorkflow;
 
-  return json({ success: true, notice });
+  return jsonResp({ success: true, notice });
 }
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === '/api/submit' && request.method === 'POST') {
+      return handleSubmit(request, env);
+    }
+    return env.ASSETS.fetch(request);
+  }
+};
