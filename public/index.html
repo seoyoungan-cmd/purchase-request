@@ -189,12 +189,10 @@ async function onGlobalSearch() {
   } else {
     dropdown.innerHTML = matched.slice(0, 20).map(p => {
       const name  = p.name || p.품목명 || p[0] || '';
-      const cat   = p.category || p.구분 || p[1] || '일반';
-      const is전결 = cat.includes('전결');
       const safeN = name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      return `<div class="search-item" onclick="addFromSearch('${safeN}','${is전결 ? '전결' : '일반'}')">
+      return `<div class="search-item" onclick="addFromSearch('${safeN}','전결')">
         <span class="search-item-name">${name}</span>
-        <span class="${is전결 ? 'badge-전결' : 'badge-일반'}">${is전결 ? '✅ 전결' : '📋 일반'}</span>
+        <span class="badge-전결">✅ 전결</span>
       </div>`;
     }).join('');
   }
