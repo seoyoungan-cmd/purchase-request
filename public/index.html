@@ -124,7 +124,7 @@
   <div class="section-title">요청자</div>
   <div class="row">
     <div>
-      <label>소속 <span class="opt">(선택)</span></label>
+      <label>소속 <span class="req">*</span></label>
       <input type="text" id="dept" placeholder="예) 액상팀" oninput="saveMeta()">
     </div>
     <div>
@@ -384,6 +384,7 @@ function collectItems() {
 }
 
 function validate() {
+  if (!document.getElementById('dept').value.trim())      { showToast('소속을 입력해주세요'); return false; }
   if (!document.getElementById('requester').value.trim()) { showToast('이름을 입력해주세요'); return false; }
   const items = collectItems();
   if (!items.length) { showToast('품목을 1개 이상 추가해주세요'); return false; }
