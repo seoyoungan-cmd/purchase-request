@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: purchase-request
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
-    envVars:
-      - key: SLACK_BOT_TOKEN
-        sync: false
