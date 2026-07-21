@@ -1,0 +1,107 @@
+name: 조제일자 안내
+
+on:
+  schedule:
+    - cron: '0 19 * * 0-4'  # KST 월~금 04:00 실행 → 슬랙이 05:55에 예약 발송
+  workflow_dispatch:
+
+jobs:
+  send-joje:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 패키지 설치
+        run: pip install requests pytz
+
+      - name: 조제일자 + 날씨 슬랙 예약 전송
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN_ILHO }}
+        run: |
+          python3 << 'EOF'
+          import requests
+          from datetime import datetime
+          import pytz
+          import os
+
+          kst = pytz.timezone('Asia/Seoul')
+          now = datetime.now(kst)
+
+          # 조제일자 계산
+          year = now.strftime('%y')
+          month = now.strftime('%m')
+          day = now.strftime('%d')
+          nums = [year[0], month[0], day[0], year[1], month[1], day[1]]
+          joje = '  '.join(nums)
+
+          # 산청 날씨 조회 (wttr.in JSON)
+          weather_line = ''
+          try:
+              res = requests.get('https://wttr.in/Sancheong?format=j1', timeout=8)
+              w = res.json()
+              today_w = w['weather'][0]
+              min_c = today_w['mintempC']
+              max_c = today_w['maxtempC']
+              # 낮 12시 시간대(index 4)를 오늘 대표 날씨로 사용
+              desc_en = today_w['hourly'][4]['weatherDesc'][0]['value'].lower()
+
+              emoji_map = [
+                  ('thunder', '⛈️'), ('blizzard', '❄️'), ('snow', '❄️'), ('sleet', '🌨️'),
+                  ('heavy rain', '🌧️'), ('moderate rain', '🌧️'), ('light rain', '🌦️'),
+                  ('drizzle', '🌦️'), ('shower', '🌦️'), ('rain', '🌧️'),
+                  ('fog', '🌫️'), ('mist', '🌫️'), ('haze', '🌫️'),
+                  ('overcast', '☁️'), ('cloudy', '☁️'),
+                  ('partly', '⛅'), ('sunny', '☀️'), ('clear', '☀️'),
+              ]
+              ko_map = [
+                  ('thunder', '천둥번개'), ('blizzard', '눈보라'), ('snow', '눈'), ('sleet', '진눈깨비'),
+                  ('heavy rain', '폭우'), ('moderate rain', '비'), ('light rain', '가랑비'),
+                  ('drizzle', '이슬비'), ('shower', '소나기'), ('rain', '비'),
+                  ('fog', '안개'), ('mist', '안개'), ('haze', '연무'),
+                  ('overcast', '흐림'), ('cloudy', '흐림'),
+                  ('partly cloudy', '구름 조금'), ('partly', '구름 조금'),
+                  ('sunny', '맑음'), ('clear', '맑음'),
+              ]
+
+              emoji = '🌤️'
+              for k, v in emoji_map:
+                  if k in desc_en:
+                      emoji = v
+                      break
+              ko_desc = desc_en
+              for k, v in ko_map:
+                  if k in desc_en:
+                      ko_desc = v
+                      break
+
+              weather_line = f"\n{emoji} 산청  {ko_desc}  최저 {min_c}° / 최고 {max_c}°"
+          except Exception as e:
+              print(f"⚠️ 날씨 조회 실패 (무시): {e}")
+
+          message = f"\U0001f4c5 오늘의 생산일자 안내\n───────────────\n　　*{joje}*{weather_line}"
+
+          # 오늘 KST 05:55 타임스탬프 계산
+          target = now.replace(hour=5, minute=55, second=0, microsecond=0)
+
+          if now >= target:
+              # 이미 05:55 지남 (극단적 지연) → 즉시 전송
+              res = requests.post(
+                  'https://slack.com/api/chat.postMessage',
+                  headers={'Authorization': f'Bearer {os.environ["SLACK_BOT_TOKEN"]}'},
+                  json={'channel': 'C08BTN82VFZ', 'text': message, 'mrkdwn': True}
+              )
+              label = '즉시 전송'
+          else:
+              # 슬랙이 정확히 05:55에 발송하도록 예약
+              res = requests.post(
+                  'https://slack.com/api/chat.scheduleMessage',
+                  headers={'Authorization': f'Bearer {os.environ["SLACK_BOT_TOKEN"]}'},
+                  json={'channel': 'C08BTN82VFZ', 'text': message, 'post_at': int(target.timestamp())}
+              )
+              label = '05:55 예약'
+
+          data = res.json()
+          if data.get('ok'):
+              print(f"✅ {label} 성공: {joje}{weather_line.strip()}")
+          else:
+              print(f"❌ 실패: {data.get('error')}")
+              exit(1)
+          EOF
