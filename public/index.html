@@ -48,6 +48,8 @@
   .badge-전결 { font-size: 11px; font-weight: 700; background: #D1FAE5; color: #065F46; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
   .search-empty { padding: 16px; text-align: center; color: #94A3B8; font-size: 13px; }
   .search-hint { font-size: 12px; color: #94A3B8; margin-top: 8px; }
+  .btn-add-일반 { width: 100%; padding: 13px; background: #F0F9FF; border: 1.5px solid #BAE6FD; border-radius: 10px; color: #0369A1; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; }
+  .btn-add-일반:hover { background: #E0F2FE; }
 
   /* 품목 카드 */
   .item-card { background: white; border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; margin: 0 12px 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
@@ -141,18 +143,17 @@
   <div class="search-wrap">
     <div class="search-input-row">
       <span class="search-icon-abs">🔍</span>
-      <input type="text" id="global-search" placeholder="품목명 검색 (예: 핸드, 타올)" oninput="onGlobalSearch()" autocomplete="off">
+      <input type="text" id="global-search" placeholder="품목명 검색 (예: 물티슈)" oninput="onGlobalSearch()" autocomplete="off">
     </div>
     <div class="search-dropdown" id="global-dropdown"></div>
   </div>
-  <div class="search-hint">검색 후 선택하면 전결 품목이 자동으로 추가돼요</div>
+  <div class="search-hint">검색 후 선택하면 ✅ 전결로 자동 추가돼요</div>
+  <div style="height:10px;"></div>
+  <button class="btn-add-일반" onclick="addItem()">📋 찾는 품목이 없으면 일반으로 직접 올려주세요</button>
 </div>
 
 <!-- 품목 카드 -->
 <div id="items-wrap"></div>
-
-<!-- 직접 입력 추가 -->
-<button class="btn-add" onclick="addItem()">+ 직접 입력으로 추가</button>
 
 <div class="footer">산청 1호점</div>
 
