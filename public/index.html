@@ -39,7 +39,7 @@
   .search-wrap { position: relative; }
   .search-input-row { position: relative; }
   .search-input-row input { padding-left: 36px; background: #F8FAFC; }
-  .search-icon-abs { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; z-index: 1; }
+  .search-icon-abs { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; z-index: 1; }
   .search-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: white; border: 1.5px solid var(--border); border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.13); z-index: 200; max-height: 240px; overflow-y: auto; display: none; }
   .search-dropdown.open { display: block; }
   .search-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 14px; gap: 8px; }
@@ -79,8 +79,8 @@
 
   /* 제출 버튼 */
   .submit-wrap { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; padding: 12px 12px 16px; background: white; border-top: 1px solid var(--border); }
-  .btn-submit { width: 100%; padding: 16px; background: #1E3A2F; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-  .btn-submit:hover { background: #162E24; }
+  .btn-submit { width: 100%; padding: 16px; background: var(--green); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .btn-submit:hover { background: #245A43; }
   .btn-submit:disabled { background: #94A3B8; }
   .btn-badge { background: rgba(255,255,255,.2); border-radius: 20px; padding: 3px 10px; font-size: 13px; font-weight: 600; }
 
@@ -95,7 +95,7 @@
   .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
   .modal-btns button { flex: 1; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; border: none; cursor: pointer; }
   .btn-cancel { background: #F1F5F9; color: #374151; }
-  .btn-confirm { background: #1E3A2F; color: white; }
+  .btn-confirm { background: var(--green); color: white; }
 
   .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #1F2937; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 400; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
@@ -161,7 +161,7 @@
 <!-- 제출 버튼 -->
 <div class="submit-wrap">
   <button class="btn-submit" id="btn-submit" onclick="openPreview()">
-    • 확인 후 전송하기
+    • 확인 후 제출하기
     <span class="btn-badge" id="item-count-badge">요청 품목 0개</span>
   </button>
 </div>
@@ -456,7 +456,7 @@ async function confirmSubmit() {
   }
 
   btn.disabled = false;
-  btn.innerHTML = '• 확인 후 전송하기 <span class="btn-badge" id="item-count-badge">요청 품목 ' + document.querySelectorAll('.item-card').length + '개</span>';
+  btn.innerHTML = '• 확인 후 제출하기 <span class="btn-badge" id="item-count-badge">요청 품목 ' + document.querySelectorAll('.item-card').length + '개</span>';
 }
 
 loadMeta();
