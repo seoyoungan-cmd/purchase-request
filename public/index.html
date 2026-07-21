@@ -69,6 +69,19 @@
   .optional-tag { font-size: 11px; color: #9CA3AF; margin-left: 4px; }
   .required-tag { color: #EF4444; }
   .divider { height: 1px; background: #F1F5F9; margin: 12px 0; }
+
+  /* 품목 검색 */
+  .search-wrap { position: relative; margin-bottom: 14px; }
+  .search-wrap input { padding-left: 34px; background: #F8FAFC; }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; }
+  .search-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1.5px solid var(--border); border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,.12); z-index: 50; max-height: 220px; overflow-y: auto; display: none; }
+  .search-dropdown.open { display: block; }
+  .search-item { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+  .search-item:last-child { border-bottom: none; }
+  .search-item:hover { background: #F0FDF4; }
+  .badge-전결 { font-size: 11px; font-weight: 700; background: #D1FAE5; color: #065F46; padding: 2px 8px; border-radius: 20px; }
+  .badge-일반 { font-size: 11px; font-weight: 700; background: #DBEAFE; color: #1E40AF; padding: 2px 8px; border-radius: 20px; }
+  .search-empty { padding: 14px; text-align: center; color: #94A3B8; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -122,6 +135,62 @@
 
 <script>
 let itemCount = 0;
+const PRODUCTS_URL = 'https://script.google.com/macros/s/AKfycbyimqvaX7ey-dvbfVOvkNqZEAq2ByUVSm1ORHkSHoBaAb3YBxdH_pgH6byr1ICHSiqQ/exec';
+let productsCache = null;
+
+async function loadProducts() {
+  if (productsCache) return productsCache;
+  try {
+    const resp = await fetch(PRODUCTS_URL);
+    const data = await resp.json();
+    productsCache = Array.isArray(data) ? data : (data.items || []);
+  } catch { productsCache = []; }
+  return productsCache;
+}
+
+function tokenMatch(name, query) {
+  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const target = name.toLowerCase();
+  return tokens.every(t => target.includes(t));
+}
+
+async function onSearchInput(id) {
+  const query = (document.getElementById(`search-${id}`)?.value || '').trim();
+  const dropdown = document.getElementById(`dropdown-${id}`);
+  if (!query) { dropdown.classList.remove('open'); return; }
+
+  const products = await loadProducts();
+  const matched = products.filter(p => tokenMatch(p.name || p.품목명 || p[0] || '', query));
+
+  if (!matched.length) {
+    dropdown.innerHTML = `<div class="search-empty">검색 결과가 없어요</div>`;
+  } else {
+    dropdown.innerHTML = matched.slice(0, 20).map(p => {
+      const name = p.name || p.품목명 || p[0] || '';
+      const cat  = p.category || p.구분 || p[1] || '일반';
+      const is전결 = cat.includes('전결');
+      return `<div class="search-item" onclick="selectProduct(${id},'${name.replace(/'/g,"\\'")}','${is전결 ? '전결' : '일반'}')">
+        <span>${name}</span>
+        <span class="${is전결 ? 'badge-전결' : 'badge-일반'}">${is전결 ? '전결' : '일반'}</span>
+      </div>`;
+    }).join('');
+  }
+  dropdown.classList.add('open');
+}
+
+function selectProduct(id, name, category) {
+  const productInput = document.getElementById(`product-${id}`);
+  if (productInput) productInput.value = name;
+  setCategory(id, category);
+  document.getElementById(`search-${id}`).value = '';
+  document.getElementById(`dropdown-${id}`).classList.remove('open');
+}
+
+function closeAllDropdowns(exceptId) {
+  document.querySelectorAll('.search-dropdown').forEach(d => {
+    if (d.id !== `dropdown-${exceptId}`) d.classList.remove('open');
+  });
+}
 
 function loadMeta() {
   document.getElementById('dept').value = localStorage.getItem('purchase_dept') || '';
@@ -160,9 +229,14 @@ function addItem() {
       <button id="btn-전결-${id}" onclick="setCategory(${id},'전결')">✅ 전결 (즉시 구매)</button>
     </div>
     <input type="hidden" id="category-${id}" value="일반">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-${id}" placeholder="품목 검색 (예: 핸드, 타올)" oninput="onSearchInput(${id})" onfocus="closeAllDropdowns(${id})" autocomplete="off">
+      <div class="search-dropdown" id="dropdown-${id}"></div>
+    </div>
     <div class="field">
       <label>품목명 <span class="required-tag">*</span></label>
-      <input type="text" id="product-${id}" placeholder="예: A4 용지">
+      <input type="text" id="product-${id}" placeholder="직접 입력 또는 위에서 검색">
     </div>
     <div class="row">
       <div>
