@@ -161,7 +161,7 @@
 <!-- 제출 버튼 -->
 <div class="submit-wrap">
   <button class="btn-submit" id="btn-submit" onclick="openPreview()">
-    • 확인 후 제출하기
+    🔍 확인 후 제출하기
     <span class="btn-badge" id="item-count-badge">요청 품목 0개</span>
   </button>
 </div>
@@ -456,7 +456,7 @@ async function confirmSubmit() {
   }
 
   btn.disabled = false;
-  btn.innerHTML = '• 확인 후 제출하기 <span class="btn-badge" id="item-count-badge">요청 품목 ' + document.querySelectorAll('.item-card').length + '개</span>';
+  btn.innerHTML = '🔍 확인 후 제출하기 <span class="btn-badge" id="item-count-badge">요청 품목 ' + document.querySelectorAll('.item-card').length + '개</span>';
 }
 
 loadMeta();
