@@ -549,8 +549,6 @@ function buildPreview() {
   const items     = collectItems();
   const sender    = dept ? `${dept} ${requester}` : requester;
   const lines     = [`🛒 ${sender} 님의 구매 요청`, ''];
-  const 전결 = items.filter(it => it.category === '전결');
-  const 일반 = items.filter(it => it.category !== '전결');
   let num = 1;
   function fmt(it) {
     const display = it.option ? `${it.product} (${it.option})` : it.product;
@@ -561,8 +559,7 @@ function buildPreview() {
     num++;
     return r.join('\n');
   }
-  if (전결.length) { lines.push('✅ 전결 (즉시 구매)'); 전결.forEach(it => { lines.push(fmt(it)); lines.push(''); }); }
-  if (일반.length) { lines.push('📋 일반 (품의 필요)'); 일반.forEach(it => { lines.push(fmt(it)); lines.push(''); }); }
+  items.forEach(it => { lines.push(fmt(it)); lines.push(''); });
   if (lines[lines.length - 1] === '') lines.pop();
   return lines.join('\n');
 }

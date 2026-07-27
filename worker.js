@@ -129,7 +129,6 @@ async function handleSubmit(request, env) {
   const sender = dept ? `${dept} ${requester}` : requester;
   const lines  = [`🛒 *${sender}* 님의 구매 요청`, ''];
 
-  const 전결 = items.filter(it => (it.category || '').trim() === '전결');
   const 일반 = items.filter(it => (it.category || '').trim() !== '전결');
 
   function formatItem(num, item) {
@@ -149,18 +148,11 @@ async function handleSubmit(request, env) {
   let num = 1;
   const 일반WithNums = [];
 
-  if (전결.length) {
-    lines.push('✅ *전결* (즉시 구매)');
-    for (const item of 전결) { lines.push(...formatItem(num, item)); num++; lines.push(''); }
-  }
-  if (일반.length) {
-    lines.push('📋 *일반* (품의 필요)');
-    for (const item of 일반) {
-      lines.push(...formatItem(num, item));
-      일반WithNums.push([num, item]);
-      num++;
-      lines.push('');
-    }
+  for (const item of items) {
+    lines.push(...formatItem(num, item));
+    if ((item.category || '').trim() !== '전결') 일반WithNums.push([num, item]);
+    num++;
+    lines.push('');
   }
   if (lines[lines.length - 1] === '') lines.pop();
 
