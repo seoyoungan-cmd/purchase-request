@@ -79,7 +79,14 @@ async function uploadSlackFile(token, fileContent, filename, channelId, threadTs
   });
   const urlData = await urlResp.json();
   if (!urlData.ok) return urlData;
-  await fetch(urlData.upload_url, { method: 'POST', body: fileContent });
+
+  const uploadResp = await fetch(urlData.upload_url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream' },
+    body: fileContent,
+  });
+  if (!uploadResp.ok) return { ok: false, error: `upload_failed_${uploadResp.status}` };
+
   const completeResp = await fetch('https://slack.com/api/files.completeUploadExternal', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -128,15 +135,14 @@ async function handleSubmit(request, env) {
   function formatItem(num, item) {
     const product  = (item.product || '').trim();
     const option   = (item.option  || '').trim();
+    const unit     = (item.unit    || '').trim();
     const quantity = item.quantity || 1;
     const reason   = (item.reason  || '').trim();
     const link     = (item.link    || '').trim();
-    const price    = (item.price   || '').trim();
     const display  = option ? `${product} (${option})` : product;
-    const r = [`*${num}. ${display}*`, `   · 수량: ${quantity}개`, `   · 요청 이유: ${reason}`];
-    if (link)           r.push(`   · 구매링크: <${link}|링크>`);
-    if (price)          r.push(`   · 가격: ${price}`);
-    if (item.has_photo) r.push('   · 📷 사진 첨부됨');
+    const qtyStr   = unit ? `${quantity}${unit}` : `${quantity}개`;
+    const r = [`*${num}. ${display}*`, `   · 수량: ${qtyStr}`, `   · 요청 이유: ${reason}`];
+    if (link) r.push(`   · 구매링크: <${link}|링크>`);
     return r;
   }
 
@@ -185,18 +191,18 @@ async function handleSubmit(request, env) {
     for (const [itemNum, item] of 일반WithNums) {
       const product  = (item.product || '').trim();
       const option   = (item.option  || '').trim();
+      const unit     = (item.unit    || '').trim();
       const quantity = item.quantity || 1;
       const reason   = (item.reason  || '').trim();
       const link     = (item.link    || '').trim();
-      const price    = (item.price   || '').trim();
       const display  = option ? `${product} (${option})` : product;
-      const qtyDisp  = option ? `${option} ${quantity}개` : `${quantity}개`;
+      const qtyDisp  = option ? `${option} ${quantity}${unit || '개'}` : `${quantity}${unit || '개'}`;
 
       if (일반WithNums.length > 1) dm.push(`*[${itemNum}번 품목]*`);
       dm.push(`<@${RYJH_SLACK_ID}>`);
       dm.push(`• 구입 주체 : 산청1호점`);
       dm.push(`• 구매 품목 : ${display}`);
-      dm.push(`• 구매 금액 : ${price || '-'}`);
+      dm.push(`• 구매 금액 : -`);
       dm.push(`• 구매 수량 : ${qtyDisp}`);
       dm.push(`• 구매처명 : ${link ? '네이버' : '-'}`);
       dm.push(`• 구매 사유 : ${reason}`);
