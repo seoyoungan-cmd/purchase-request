@@ -105,3 +105,4 @@ jobs:
               print(f"❌ 실패: {data.get('error')}")
               exit(1)
           EOF
+# last updated: 2026-07-28
