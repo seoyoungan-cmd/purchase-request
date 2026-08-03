@@ -82,12 +82,12 @@
   select.native-select:focus { background:var(--green-pale); box-shadow:0 0 0 2px var(--green-light); }
 
   /* 수량 */
-  .qty-wrap { display:flex; align-items:center; }
-  .qty-row { display:flex; align-items:center; background:#F5F7FA; border-radius:40px; padding:4px; gap:0; }
-  .qty-btn { width:40px; height:40px; border:none; background:white; font-size:22px; cursor:pointer; color:var(--green); display:flex; align-items:center; justify-content:center; font-weight:500; border-radius:50%; flex-shrink:0; transition:background .15s; box-shadow:0 1px 4px rgba(0,0,0,.08); }
-  .qty-btn:hover { background:var(--green-pale); }
-  .qty-val { width:48px; height:40px; border:none; text-align:center; font-size:17px; font-weight:700; color:var(--dark); background:transparent; outline:none; }
-  .qty-unit { font-size:14px; color:var(--gray); margin-left:10px; }
+  .qty-wrap { display:flex; align-items:center; gap:10px; }
+  .qty-row { display:flex; align-items:center; border:1.5px solid var(--border); border-radius:10px; overflow:hidden; width:fit-content; }
+  .qty-btn { width:40px; height:42px; border:none; background:#F8FAFC; font-size:20px; cursor:pointer; color:var(--dark); display:flex; align-items:center; justify-content:center; font-weight:600; transition:background .15s; flex-shrink:0; }
+  .qty-btn:hover { background:#E8EAED; }
+  .qty-val { width:48px; height:42px; border:none; border-left:1.5px solid var(--border); border-right:1.5px solid var(--border); text-align:center; font-size:16px; font-weight:700; color:var(--dark); background:white; outline:none; }
+  .qty-unit { font-size:14px; color:var(--gray); }
 
   textarea { width:100%; padding:12px 14px; border:none; border-radius:14px; font-size:15px; outline:none; resize:none; font-family:inherit; background:#F5F7FA; color:var(--dark); transition:background .2s, box-shadow .2s; }
   textarea:focus { background:var(--green-pale); box-shadow:0 0 0 2px var(--green-light); }
